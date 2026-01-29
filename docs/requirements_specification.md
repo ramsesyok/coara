@@ -1,4 +1,4 @@
-# coara ソースコード特化RAGシステム 要件定義書
+# coara（ソースコード特化RAGシステム）要件定義書
 ファイル: docs/requirements_specification.md  
 版: v0.5（ドラフト）  
 更新日: 2026-01-25（Asia/Tokyo）

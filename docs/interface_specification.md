@@ -1,4 +1,5 @@
-# interface_specification.md
+# coara（ソースコード特化RAGシステム）インタフェース仕様書
+
 ファイル: docs/interface_specification.md  
 版: v0.5（ドラフト）  
 更新日: 2026-01-25（Asia/Tokyo）
