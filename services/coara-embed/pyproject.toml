@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "coara-embed"
+version = "0.1.0"
+description = "coara 埋め込みサービス（gRPC）"
+requires-python = ">=3.11"
+dependencies = [
+    # gRPC
+    "grpcio>=1.64.0",
+    "grpcio-tools>=1.64.0",
+    "protobuf>=5.27.0",
+    # 埋め込みモデル
+    "sentence-transformers>=3.0.0",
+    "torch>=2.3.0",
+    "transformers>=4.41.0",
+    # MetaDB
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.13.0",
+    # 設定
+    "pyyaml>=6.0",
+    # ULID
+    "python-ulid>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[project.scripts]
+coara-embed = "app.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

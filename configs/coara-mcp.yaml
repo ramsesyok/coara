@@ -1,0 +1,66 @@
+service:
+  version: "0.1.0"
+  listen: "0.0.0.0:8080"
+  base_url: "http://localhost:8080"
+  request_timeout_sec: 60
+
+mcp:
+  transport: "http+sse"
+  # パス互換: GET /mcp/sse, POST /mcp/request を維持する
+  path_compat:
+    sse_path: "/mcp/sse"
+    request_path: "/mcp/request"
+  tools_enabled:
+    - "query"
+    - "search"
+    - "get_snippet"
+    - "index_status"
+    - "list_repos"
+    - "list_profiles"
+
+rag_api:
+  defaults:
+    top_k: 10
+    score_threshold: 0.5
+  answer_mode: "llm"            # llm / snippet_only
+  repo_content:
+    max_snippet_chars: 4000
+  filters:
+    # ファイルパスフィルタ（任意）
+    file_path_patterns: []
+
+embed:
+  grpc_endpoint: "localhost:50051"
+  timeout_sec: 30
+  retry:
+    max_attempts: 3
+    backoff_ms: 500
+
+qdrant:
+  endpoint: "http://localhost:6333"
+  api_key: ""
+  timeout_sec: 30
+  retry:
+    max_attempts: 3
+    backoff_ms: 500
+
+repos:
+  - repo_id: ""                 # UpsertRepository で発行された ULID を記入
+    display_name: "example-repo"
+    mirror_path: "data/workdir/example-repo"
+    default_profile: "prof-default"
+
+security:
+  auth:
+    enabled: false
+    mode: "api_key"             # api_key / basic
+    api_key: ""
+  cors:
+    enabled: true
+    allow_origins:
+      - "http://localhost:3000"
+
+logging:
+  level: "INFO"
+  redact:
+    enabled: true

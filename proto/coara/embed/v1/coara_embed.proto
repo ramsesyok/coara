@@ -1,0 +1,207 @@
+syntax = "proto3";
+
+package coara.embed.v1;
+
+option go_package = "github.com/ramses/coara/gen/go/coara/embed/v1;embeddingv1";
+
+// CoaraEmbed は coara-embed が提供する gRPC サービス。
+// coara-cli（取り込み）と rag_api（coara-mcp 内部、問い合わせ）の双方が利用する。
+service CoaraEmbed {
+  // --- 主要 RPC（互換維持） ---
+
+  // embedding_profile_id からモデル情報・コレクション名を解決する。
+  rpc ResolveProfile(ResolveProfileRequest) returns (ResolveProfileResponse);
+
+  // テキストをベクトル化する。
+  rpc Embed(EmbedRequest) returns (EmbedResponse);
+
+  // 死活確認・バージョン確認。
+  rpc Health(HealthRequest) returns (HealthResponse);
+
+  // --- 拡張 RPC（MetaDB 更新・参照） ---
+
+  // 利用可能な embedding_profile 一覧を返す。
+  rpc ListProfiles(ListProfilesRequest) returns (ListProfilesResponse);
+
+  // リポジトリ情報を登録・更新し、repo_id を払い出す。
+  rpc UpsertRepository(UpsertRepositoryRequest) returns (UpsertRepositoryResponse);
+
+  // インデックス実行の開始を記録し、index_run_id を払い出す。
+  rpc StartIndexRun(StartIndexRunRequest) returns (StartIndexRunResponse);
+
+  // インデックス実行の終了を記録する。
+  rpc FinishIndexRun(FinishIndexRunRequest) returns (FinishIndexRunResponse);
+
+  // Chunk メタ情報を MetaDB に登録する。
+  rpc UpsertChunks(UpsertChunksRequest) returns (UpsertChunksResponse);
+
+  // 埋め込み生成と VectorDB 登録の対応を MetaDB に記録する。
+  rpc UpsertEmbeddingRecords(UpsertEmbeddingRecordsRequest) returns (UpsertEmbeddingRecordsResponse);
+}
+
+// ============================================================
+// ResolveProfile
+// ============================================================
+
+message ResolveProfileRequest {
+  string embedding_profile_id = 1;
+}
+
+message ResolveProfileResponse {
+  string embedding_profile_id = 1;
+  string model_id             = 2;
+  string model_version        = 3;
+  uint32 dimension            = 4;
+  bool   normalize            = 5;
+  string collection_name      = 6;
+  uint32 max_chars            = 7;
+}
+
+// ============================================================
+// Embed
+// ============================================================
+
+message EmbedRequest {
+  string          embedding_profile_id = 1;
+  repeated string inputs               = 2;
+  // 未指定（false）の場合はプロファイルの既定値に従う。
+  bool            normalize            = 3;
+}
+
+message Vector {
+  repeated float values = 1;
+}
+
+message EmbedResponse {
+  string          embedding_profile_id = 1;
+  string          model_id             = 2;
+  string          model_version        = 3;
+  uint32          dimension            = 4;
+  repeated Vector vectors              = 5;
+}
+
+// ============================================================
+// Health
+// ============================================================
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status  = 1; // "ok"
+  string version = 2; // coara-embed のサービスバージョン
+}
+
+// ============================================================
+// ListProfiles
+// ============================================================
+
+message ListProfilesRequest {}
+
+message ProfileInfo {
+  string embedding_profile_id = 1;
+  string model_id             = 2;
+  string model_version        = 3;
+  uint32 dimension            = 4;
+  bool   normalize            = 5;
+  string collection_name      = 6;
+  uint32 max_chars            = 7;
+}
+
+message ListProfilesResponse {
+  repeated ProfileInfo profiles = 1;
+}
+
+// ============================================================
+// UpsertRepository
+// ============================================================
+
+message UpsertRepositoryRequest {
+  // 既知の repo_id がある場合に指定する（更新として扱う）。
+  string repo_hint       = 1;
+  string display_name    = 2;
+  string git_url         = 3;
+  string local_path_hint = 4;
+}
+
+message UpsertRepositoryResponse {
+  string repo_id = 1;
+}
+
+// ============================================================
+// StartIndexRun / FinishIndexRun
+// ============================================================
+
+message StartIndexRunRequest {
+  string repo_id               = 1;
+  string embedding_profile_id  = 2;
+  string mode                  = 3; // full / incremental / re-embed
+  string commit_id             = 4;
+  string started_by            = 5; // ユーザ名・マシン名など
+  string client_run_id         = 6; // 冪等性キー（同一 ID なら同一 index_run_id を返す）
+}
+
+message StartIndexRunResponse {
+  string index_run_id = 1;
+}
+
+message FinishIndexRunRequest {
+  string index_run_id  = 1;
+  string status        = 2; // success / failed / canceled
+  uint32 processed     = 3;
+  uint32 skipped       = 4;
+  uint32 errors        = 5;
+  string error_summary = 6; // 秘匿情報を含めない
+}
+
+message FinishIndexRunResponse {
+  string status = 1;
+}
+
+// ============================================================
+// UpsertChunks
+// ============================================================
+
+message ChunkInfo {
+  string chunk_id      = 1;
+  string file_path     = 2;
+  uint32 start_line    = 3;
+  uint32 end_line      = 4;
+  string language      = 5;
+  string content_hash  = 6;
+  uint32 char_count    = 7;
+}
+
+message UpsertChunksRequest {
+  string              repo_id   = 1;
+  string              commit_id = 2;
+  repeated ChunkInfo  chunks    = 3;
+}
+
+message UpsertChunksResponse {
+  uint32          upserted = 1;
+  repeated string warnings = 2;
+}
+
+// ============================================================
+// UpsertEmbeddingRecords
+// ============================================================
+
+message EmbeddingRecordInfo {
+  string chunk_id        = 1;
+  string qdrant_point_id = 2; // 推奨: chunk_id をそのまま使用
+  string vector_hash     = 3;
+  uint32 dimension       = 4;
+}
+
+message UpsertEmbeddingRecordsRequest {
+  string                       repo_id              = 1;
+  string                       commit_id            = 2;
+  string                       embedding_profile_id = 3;
+  string                       index_run_id         = 4;
+  repeated EmbeddingRecordInfo records              = 5;
+}
+
+message UpsertEmbeddingRecordsResponse {
+  uint32          upserted = 1;
+  repeated string warnings = 2;
+}

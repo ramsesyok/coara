@@ -1,0 +1,54 @@
+service:
+  version: "0.1.0"
+  # full: 全ファイルをインデックス / incremental: 差分のみ / re-embed: 埋め込みのみ再生成
+  default_mode: "incremental"
+  continue_on_error: true
+
+paths:
+  workdir: "data/workdir"       # Git clone/fetch の作業ディレクトリ
+  state_dir: "data/state"       # 実行状態・ロックファイルの保存先
+  log_dir: "data/logs"          # ログ出力先
+
+targets:
+  repos:
+    - repo_key: "example-repo"
+      git_url: "https://github.com/example/repo.git"
+      default_profile: "prof-default"
+      include:
+        - "**/*.go"
+        - "**/*.py"
+        - "**/*.ts"
+      exclude:
+        - "**/vendor/**"
+        - "**/.git/**"
+      limits:
+        max_file_size_bytes: 524288   # 512 KB
+        max_files: 50000
+
+embed:
+  endpoint: "localhost:50051"
+  timeout_sec: 60
+  retry:
+    max_attempts: 3
+    backoff_ms: 500
+  batch:
+    max_inputs: 64
+    max_chars: 20000
+
+qdrant:
+  endpoint: "http://localhost:6333"
+  api_key: ""                   # 未設定の場合は認証なし
+  timeout_sec: 30
+  distance: "Cosine"
+  shard_number: 1
+  replication_factor: 1
+
+chunking:
+  strategy: "tree-sitter"       # tree-sitter / fallback
+  timeout_sec: 30
+  max_nodes: 10000
+
+logging:
+  level: "INFO"                 # DEBUG / INFO / WARN / ERROR
+  redact:
+    enabled: true

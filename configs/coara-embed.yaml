@@ -1,0 +1,34 @@
+service:
+  version: "0.1.0"
+  grpc_listen: "0.0.0.0:50051"
+  max_workers: 16
+  request_max_inputs: 256       # 1リクエストで受け付ける最大入力数
+  request_max_chars: 20000      # 1入力の最大文字数
+
+paths:
+  profile_registry: "services/coara-embed/config/profiles.yaml"
+  metadb_sqlite: "data/metadb.sqlite3"
+  model_cache_dir: "data/models"
+  tmp_dir: "data/tmp"
+
+embedding:
+  default_device: "cpu"         # cuda / mps / cpu
+  model_load_timeout_sec: 300
+  model_cache:
+    max_loaded_models: 2        # LRU でアンロード
+  batching:
+    enabled: true
+    max_batch_size: 64
+    max_wait_ms: 10
+
+security:
+  tls:
+    enabled: false
+    cert_file: ""
+    key_file: ""
+    client_ca_file: ""          # mTLS を使う場合
+
+logging:
+  level: "INFO"                 # DEBUG / INFO / WARN / ERROR
+  redact:
+    enabled: true               # 入力テキスト等をログに出さない

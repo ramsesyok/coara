@@ -1,0 +1,26 @@
+profiles:
+  prof-default:
+    model:
+      kind: "sentence_transformers"   # sentence_transformers / transformers
+      model_path: "data/models/bge-small-ja"   # ローカルパス
+      model_id: "bge-small-ja"
+      model_version: "2025-xx"
+    embedding:
+      dimension: 384
+      normalize: true
+      max_chars: 20000
+    collection:
+      name: "coara_prof-default"
+
+  prof-code:
+    model:
+      kind: "transformers"
+      model_path: "data/models/e5-code"
+      model_id: "e5-code"
+      model_version: "2025-xx"
+    embedding:
+      dimension: 768
+      normalize: true
+      max_chars: 20000
+    collection:
+      name: "coara_prof-code"
